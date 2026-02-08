@@ -89,7 +89,7 @@ if not df_raw.empty:
         
         with c2:
             st.markdown("### Prediksi Minggu Depan")
-            if st.button('Hitik Prediksi Mingguan'):
+            if st.button('Hitung Prediksi Mingguan'):
                 hasil = predict_stock(model_m, df_weekly.values, lookback=24)
                 if hasil:
                     st.metric(label="Estimasi Minggu Depan", value=f"Rp {hasil:,.2f}")
@@ -118,3 +118,4 @@ if not df_raw.empty:
 
 else:
     st.warning("Gagal menyambung ke data Yahoo Finance.")
+
