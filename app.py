@@ -92,6 +92,7 @@ if not df_raw.empty:
                 hasil = predict_stock(model_m, df_weekly.values, lookback=24)
                 if hasil:
                     st.metric(label="Estimasi Minggu Depan", value=f"Rp {hasil:,.2f}")
+                    st.success(f"Model memprediksi harga akan bergerak ke Rp {hasil:,.2f}")
 
     # --- TAB 3: BULANAN ---
     with tab3:
@@ -110,6 +111,7 @@ if not df_raw.empty:
                 hasil = predict_stock(model_b, df_monthly.values, lookback=12)
                 if hasil:
                     st.metric(label="Estimasi Bulan Depan", value=f"Rp {hasil:,.2f}")
+                    st.success(f"Model memprediksi harga akan bergerak ke Rp {hasil:,.2f}")
 
     st.markdown("---")
     with st.expander("Lihat Data Historis Lengkap"):
@@ -117,4 +119,5 @@ if not df_raw.empty:
 
 else:
     st.warning("Gagal menyambung ke data Yahoo Finance.")
+
 
