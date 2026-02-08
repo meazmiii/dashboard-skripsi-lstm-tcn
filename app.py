@@ -74,7 +74,6 @@ if not df_raw.empty:
                 if hasil:
                     st.metric(label="Estimasi Harga Besok", value=f"Rp {hasil:,.2f}")
                     st.success(f"Model memprediksi harga akan bergerak ke Rp {hasil:,.2f}")
-                    st.balloons()
 
     # --- TAB 2: MINGGUAN ---
     with tab2:
@@ -118,3 +117,4 @@ if not df_raw.empty:
 
 else:
     st.warning("Gagal menyambung ke data Yahoo Finance.")
+
