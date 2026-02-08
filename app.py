@@ -9,77 +9,91 @@ from sklearn.preprocessing import RobustScaler
 st.set_page_config(page_title="Stock Prediction BBCA", layout="wide")
 st.title("🚀 Real-time Stock Prediction BBCA (LSTM & TCN)")
 
-# SETTING LOOKBACK TETAP (Sesuai settingan training skripsi kamu)
-LOOKBACK_FIXED = 60
-
 # 2. Fungsi Load Model
 @st.cache_resource
 def load_models():
-    model_harian = load_model('Tuned_LSTM_Harian_U64_LR0.001_KN.h5', compile=False)
-    model_mingguan = load_model('Tuned_TCN_Mingguan_U64_LR0.001_K3.h5', compile=False)
-    model_bulanan = load_model('Tuned_TCN_Bulanan_U128_LR0.001_K3.h5', compile=False)
-    return model_harian, model_mingguan, model_bulanan
+    # Nama file disesuaikan persis dengan folder skripsi kamu
+    m_harian = load_model('Tuned_LSTM_Harian_U64_LR0.001_KN.h5', compile=False)
+    m_mingguan = load_model('Tuned_TCN_Mingguan_U64_LR0.001_K3.h5', compile=False)
+    m_bulanan = load_model('Tuned_TCN_Bulanan_U128_LR0.001_K3.h5', compile=False)
+    return m_harian, m_mingguan, m_bulanan
 
 try:
     model_h, model_m, model_b = load_models()
 except Exception as e:
     st.error(f"Gagal memuat model: {e}")
 
-# 3. Fungsi Prediksi
-def predict_future(model, full_data, lookback=LOOKBACK_FIXED):
+# 3. Fungsi Prediksi Universal
+def predict_stock(model, data, lookback):
     scaler = RobustScaler()
-    scaled_all = scaler.fit_transform(full_data.reshape(-1, 1))
+    scaled_data = scaler.fit_transform(data.reshape(-1, 1))
     
-    if len(scaled_all) < lookback:
+    if len(scaled_data) < lookback:
         return None
         
-    last_sequence = scaled_all[-lookback:]
+    last_sequence = scaled_data[-lookback:]
     last_sequence = np.expand_dims(last_sequence, axis=0)
     
-    prediction_scaled = model.predict(last_sequence)
-    prediction = scaler.inverse_transform(prediction_scaled)
+    pred_scaled = model.predict(last_sequence)
+    prediction = scaler.inverse_transform(pred_scaled)
     return prediction[0][0]
 
-# 4. Sidebar (Hanya Informasi)
+# 4. Sidebar Informasi
 with st.sidebar:
-    st.write("### Informasi Aplikasi")
-    st.info(f"Aplikasi ini menggunakan jendela waktu (lookback) sebanyak {LOOKBACK_FIXED} hari untuk memprediksi harga selanjutnya.")
+    st.write("### Informasi Dashboard")
+    st.info("Dashboard ini memprediksi harga saham BBCA menggunakan 3 model berbeda sesuai timeframe skripsi.")
 
-# 5. Main UI & Data Scraping
-st.subheader("Analisis Harga Real-time (BBCA.JK)")
-# Ambil data 1 tahun agar data mencukupi tanpa error "Data tidak cukup"
-df = yf.download("BBCA.JK", period='1y', interval='1d') 
+# 5. Penarikan Data (Ambil 2 tahun agar data mingguan/bulanan cukup)
+df_raw = yf.download("BBCA.JK", period='2y')
 
-if not df.empty:
-    if isinstance(df.columns, pd.MultiIndex):
-        close_data = df['Close'].iloc[:, 0]
+if not df_raw.empty:
+    # Ambil kolom Close secara aman
+    if isinstance(df_raw.columns, pd.MultiIndex):
+        close_series = df_raw['Close'].iloc[:, 0]
     else:
-        close_data = df['Close']
+        close_series = df_raw['Close']
 
-    # Visualisasi Grafik
-    st.area_chart(close_data.tail(100))
-    
-    # Menampilkan Harga Terakhir
-    last_price = float(close_data.iloc[-1])
-    last_date = df.index[-1].date()
-    
-    st.metric(label="Harga Terakhir (Market Close)", 
-              value=f"Rp {last_price:,.2f}", 
-              delta=f"Tanggal: {last_date}")
+    # --- BAGIAN TABS UNTUK 3 TIMEFRAME ---
+    tab1, tab2, tab3 = st.tabs(["📅 Harian (LSTM)", "🗓️ Mingguan (TCN)", "📊 Bulanan (TCN)"])
 
-    with st.expander("Lihat Tabel Data Historis"):
-        st.dataframe(df.sort_index(ascending=False), use_container_width=True)
-
-    # Tombol Prediksi Langsung
-    if st.button('Mulai Prediksi Harga Selanjutnya'):
-        with st.spinner('Model sedang menganalisis pola...'):
-            latest_prices = close_data.values
-            hasil = predict_future(model_h, latest_prices)
-            
+    # --- TAB 1: HARIAN ---
+    with tab1:
+        st.subheader("Prediksi Harga Harian")
+        st.line_chart(close_series.tail(90)) # Menampilkan 90 hari terakhir
+        
+        last_p = close_series.iloc[-1]
+        st.metric("Harga Terakhir", f"Rp {last_p:,.2f}", f"Update: {df_raw.index[-1].date()}")
+        
+        if st.button('Prediksi Hari Besok'):
+            hasil = predict_stock(model_h, close_series.values, lookback=60)
             if hasil:
-                st.success(f"### Hasil Prediksi Hari Selanjutnya: Rp {hasil:,.2f}")
-                st.balloons() # Efek perayaan kecil
+                st.success(f"Prediksi Harga Selanjutnya: Rp {hasil:,.2f}")
+                st.balloons()
+
+    # --- TAB 2: MINGGUAN ---
+    with tab2:
+        st.subheader("Prediksi Harga Mingguan")
+        # Resample ke mingguan (W-MON = Weekly ending Monday)
+        df_weekly = close_series.resample('W-MON').last()
+        st.line_chart(df_weekly.tail(52)) # Menampilkan 1 tahun (52 minggu)
+        
+        if st.button('Prediksi Minggu Depan'):
+            # Gunakan lookback sesuai training mingguan (misal: 30)
+            hasil = predict_stock(model_m, df_weekly.values, lookback=30)
+            if hasil:
+                st.success(f"Prediksi Harga Minggu Depan: Rp {hasil:,.2f}")
             else:
-                st.error("Gagal melakukan prediksi. Data historis tidak mencukupi.")
-else:
-    st.warning("Gagal mengambil data dari Yahoo Finance.")
+                st.error("Data mingguan tidak cukup (Butuh minimal 30 minggu).")
+
+    # --- TAB 3: BULANAN ---
+    with tab3:
+        st.subheader("Prediksi Harga Bulanan")
+        # Resample ke bulanan (M = Month end)
+        df_monthly = close_series.resample('M').last()
+        st.line_chart(df_monthly.tail(24)) # Menampilkan 2 tahun (24 bulan)
+        
+        if st.button('Prediksi Bulan Depan'):
+            # Gunakan lookback sesuai training bulanan (misal: 12)
+            hasil = predict_stock(model_b, df_monthly.values, lookback=12)
+            if hasil:
+                st.success(f"Prediksi Harga Bulan Depan: Rp {hasil:,.2f}")
