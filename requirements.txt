@@ -1,4 +1,7 @@
 streamlit
+yfinance
 pandas
-plotly
-openpyxl
+numpy
+tensorflow-cpu
+scikit-learn
+keras-tcn  # Tambahkan ini jika kamu menggunakan library khusus untuk layer TCN
