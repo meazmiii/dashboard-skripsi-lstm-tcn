@@ -23,7 +23,7 @@ try:
 except Exception as e:
     st.error(f"Gagal memuat model: {e}")
 
-# 3. Fungsi Prediksi Universal (Fix Shape Error)
+# 3. Fungsi Prediksi Universal (FIXED SHAPE ERROR)
 def predict_stock(model, data, lookback):
     scaler = RobustScaler()
     # Data harus di-reshape ke (-1, 1) untuk Scaler
@@ -35,8 +35,7 @@ def predict_stock(model, data, lookback):
     # Ambil urutan terakhir untuk input model
     last_sequence = scaled_data[-lookback:]
     
-    # Reshape ke 3D (Batch, Timesteps, Feature) -> (1, lookback, 1)
-    # Ini untuk memperbaiki error: expected shape=(None, 24, 1)
+    # PERBAIKAN UTAMA: Reshape ke 3D (1, lookback, 1) agar sesuai (None, 24, 1)
     last_sequence = last_sequence.reshape(1, lookback, 1)
     
     # Prediksi
@@ -57,17 +56,16 @@ with st.sidebar:
     """)
 
 # 5. Penarikan Data (Ambil 2 tahun agar data mingguan/bulanan mencukupi)
-# Menggunakan period '2y' agar data historis cukup untuk lookback 24 bulan
 df_raw = yf.download("BBCA.JK", period='2y')
 
 if not df_raw.empty:
-    # Mengambil data Close secara aman (Handle MultiIndex yfinance)
+    # Mengambil data Close secara aman (Handle MultiIndex yfinance terbaru)
     if isinstance(df_raw.columns, pd.MultiIndex):
         close_series = df_raw['Close'].iloc[:, 0]
     else:
         close_series = df_raw['Close']
     
-    # Pastikan tidak ada data kosong agar grafik muncul sempurna
+    # Buang data kosong agar grafik muncul sempurna
     close_series = close_series.dropna()
 
     # --- BAGIAN TABS UNTUK 3 TIMEFRAME ---
@@ -76,7 +74,7 @@ if not df_raw.empty:
     # --- TAB 1: HARIAN ---
     with tab1:
         st.subheader("Prediksi Harga Harian")
-        st.area_chart(close_series.tail(90)) # Menampilkan 90 hari terakhir
+        st.area_chart(close_series.tail(90)) # Menampilkan 90 hari terakhir agar grafik padat
         
         last_p = float(close_series.iloc[-1])
         st.metric("Harga Terakhir (Harian)", f"Rp {last_p:,.2f}", f"Update: {df_raw.index[-1].date()}")
@@ -102,7 +100,7 @@ if not df_raw.empty:
         
         if st.button('Mulai Prediksi Mingguan'):
             with st.spinner('Menganalisis pola mingguan...'):
-                # Berdasarkan error sebelumnya, lookback diubah ke 24
+                # Lookback diubah ke 24 sesuai error "expected shape=(None, 24, 1)"
                 hasil = predict_stock(model_m, df_weekly.values, lookback=24)
                 if hasil:
                     st.success(f"### Prediksi Harga Minggu Depan: Rp {hasil:,.2f}")
@@ -121,16 +119,16 @@ if not df_raw.empty:
         
         if st.button('Mulai Prediksi Bulanan'):
             with st.spinner('Menganalisis pola bulanan...'):
-                # Lookback disesuaikan ke 24 sesuai arsitektur model bulanan kamu
+                # Lookback disesuaikan ke 24 sesuai arsitektur model bulanan
                 hasil = predict_stock(model_b, df_monthly.values, lookback=24)
                 if hasil:
                     st.success(f"### Prediksi Harga Bulan Depan: Rp {hasil:,.2f}")
                 else:
                     st.error("Data bulanan tidak cukup (Butuh minimal 24 bulan).")
 
-    # Bagian Tabel di bawah semua Tab
+    # Bagian Tabel di bawah
     with st.expander("Lihat Detail Tabel Data Historis"):
         st.dataframe(df_raw.sort_index(ascending=False), use_container_width=True)
 
 else:
-    st.warning("Gagal mengambil data dari Yahoo Finance. Periksa koneksi internet.")
+    st.warning("Gagal mengambil data dari Yahoo Finance.")
