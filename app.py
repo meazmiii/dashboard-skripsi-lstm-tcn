@@ -18,26 +18,38 @@ now_jkt = datetime.now(tz_jkt)
 
 st.title("🚀 Dashboard Analisis Saham BBCA (LSTM & TCN)")
 
-# --- PERBAIKAN: Jam & Tanggal Sejajar (Gaya Backticks) Ukuran Lebih Besar ---
+# --- PERBAIKAN: Kalimat Tetap Sama, Ukuran Diperbesar, Posisi Sejajar ---
+st.write("") # Memberi ruang sedikit
 col_jam, col_tgl = st.columns([1, 1])
+
 with col_jam:
-    # Menggunakan font-size lebih besar (45px)
-    st.markdown(f"## **Waktu Sistem:** <span style='font-size: 45px;'>`{now_jkt.strftime('%H:%M:%S')}`</span> **WIB**", unsafe_allow_html=True)
+    # Menggunakan HTML sederhana di dalam markdown agar font-size bisa diatur besar
+    st.markdown(f"## **Waktu Sistem (Real-time):** <span style='font-size: 38px;'>`{now_jkt.strftime('%H:%M:%S')}`</span> **WIB**", unsafe_allow_html=True)
+
 with col_tgl:
-    # Menggunakan font-size lebih besar (45px) dan rata kanan
-    st.markdown(f"<div style='text-align: right;'>## <b>Tanggal:</b> <span style='font-size: 45px;'><code>{now_jkt.strftime('%d-%m-%Y')}</code></span></div>", unsafe_allow_html=True)
+    # Menggunakan HTML sederhana untuk sejajar kanan dan font-size besar
+    st.markdown(f"<div style='text-align: right;'><h2><b>Tanggal:</b> <span style='font-size: 38px;'><code>{now_jkt.strftime('%d-%m-%Y')}</code></span></h2></div>", unsafe_allow_html=True)
 
 st.markdown("---")
 
-# CSS Tambahan untuk memastikan tabel tidak gelap di semua tab
+# --- PERBAIKAN: CSS Khusus Agar Tabel Tidak Gelap ---
 st.markdown("""
     <style>
-    .stDataFrame div[data-testid="stTable"] {
-        color: white !important;
+    /* Memaksa semua teks di dalam tabel/dataframe agar berwarna putih terang */
+    .stDataFrame, [data-testid="stTable"] {
+        color: #FFFFFF !important;
     }
-    /* Memaksa teks dalam dataframe agar selalu putih/terang */
-    [data-testid="stTable"] td {
+    th {
+        color: #FFFFFF !important;
+        background-color: #31333F !important;
+    }
+    td {
+        color: #FFFFFF !important;
+    }
+    /* Memperbaiki tampilan expander agar kontras */
+    .streamlit-expanderHeader {
         color: white !important;
+        background-color: #262730 !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -82,6 +94,7 @@ def run_pred_w(data_w):
 def run_pred_m(data_m):
     st.session_state.res_m = predict_stock(model_b, data_m, 12)
 
+# 4. Tampilan Utama
 if not df_all.empty:
     close_series = df_all['Close'].dropna()
     tab1, tab2, tab3 = st.tabs(["📅 Harian (LSTM)", "🗓️ Mingguan (TCN)", "📊 Bulanan (TCN)"])
@@ -153,7 +166,7 @@ if not df_all.empty:
         with st.expander("Lihat Data Historis Bulanan Lengkap"):
             st.dataframe(df_m.sort_index(ascending=False), use_container_width=True)
 
-# --- Copyright Cerah ---
+# --- Copyright Cerah & Terang ---
 st.markdown("<br><br>", unsafe_allow_html=True)
 st.markdown(
     """
