@@ -6,14 +6,9 @@ from datetime import datetime
 import pytz
 from tensorflow.keras.models import load_model
 from sklearn.preprocessing import RobustScaler
+from streamlit_autorefresh import st_autorefresh
 
-# Pastikan library autorefresh terpasang di requirements.txt
-try:
-    from streamlit_autorefresh import st_autorefresh
-except ImportError:
-    st_error = "Library 'streamlit-autorefresh' belum terinstal."
-
-# 1. Konfigurasi Halaman & Auto-refresh (Setiap 1 Detik)
+# 1. Konfigurasi Halaman & Auto-refresh (1 detik)
 st.set_page_config(page_title="Dashboard Skripsi BBCA", layout="wide")
 st_autorefresh(interval=1000, key="datarefresh")
 
@@ -37,7 +32,7 @@ try:
 except Exception as e:
     st.error(f"Gagal memuat model: {e}")
 
-# 3. Fungsi Prediksi
+# 3. Fungsi Prediksi Universal
 def predict_stock(model, data, lookback):
     scaler = RobustScaler()
     scaled_data = scaler.fit_transform(data.reshape(-1, 1))
@@ -56,27 +51,46 @@ if not df_all.empty:
 
     tab1, tab2, tab3 = st.tabs(["📅 Harian (LSTM)", "🗓️ Mingguan (TCN)", "📊 Bulanan (TCN)"])
 
-    # --- TAB 1: HARIAN (LSTM) ---
+    # --- TAB 1: HARIAN ---
     with tab1:
         st.subheader("Analisis Perbandingan & Prediksi Harian (LSTM)")
         last_p = float(close_series.iloc[-1])
-        # Prediksi untuk hari ini (backtest)
         pred_today = predict_stock(model_h, close_series.iloc[:-1].values, lookback=60)
 
         c1, c2 = st.columns(2)
-        with c1: st.metric("Harga Aktual Terakhir", f"Rp {last_p:,.2f}"); st.caption("Status: Real-time WIB")
-        with c2: st.metric("Prediksi LSTM", f"Rp {pred_today:,.2f}")
+        with c1: 
+            st.metric("Harga Aktual Terakhir", f"Rp {last_p:,.2f}")
+            st.caption(f"Status: Real-time WIB")
+        with c2: 
+            st.metric("Prediksi LSTM", f"Rp {pred_today:,.2f}")
         
-        # TOMBOL PREDIKSI BESOK (DIKEMBALIKAN)
-        if st.button('🔮 Jalankan Prediksi LSTM (Besok)'):
+        st.markdown("---")
+        # FITUR KEMBALI: Historis Akurasi 5 Hari
+        st.write("### 🕒 Historis Akurasi (5 Hari Bursa Terakhir)")
+        history_h = []
+        for i in range(1, 6):
+            t_idx = -i
+            act_val = close_series.iloc[t_idx]
+            act_date = close_series.index[t_idx].date()
+            p_val = predict_stock(model_h, close_series.iloc[:t_idx].values, lookback=60)
+            history_h.append({
+                "Tanggal": act_date,
+                "Harga Aktual": f"Rp {act_val:,.2f}",
+                "Prediksi LSTM": f"Rp {p_val:,.2f}",
+                "Selisih (Rp)": f"{abs(act_val - p_val):,.2f}"
+            })
+        st.table(pd.DataFrame(history_h))
+
+        # FITUR KEMBALI: Tombol Prediksi Besok
+        if st.button('Jalankan Prediksi LSTM (Besok)'):
             with st.spinner('Menghitung...'):
                 hasil = predict_stock(model_h, close_series.values, lookback=60)
                 st.success(f"### Estimasi Harga LSTM Besok: Rp {hasil:,.2f}")
-        
+
         with st.expander("Lihat Data Historis Harian Lengkap (OHLCV)"):
             st.dataframe(df_all.sort_index(ascending=False), use_container_width=True)
 
-    # --- TAB 2: MINGGUAN (TCN) ---
+    # --- TAB 2: MINGGUAN ---
     with tab2:
         st.subheader("Analisis Perbandingan & Prediksi Mingguan (TCN)")
         df_w_full = df_all.resample('W-MON').agg({'Open':'first','High':'max','Low':'min','Close':'last','Volume':'sum'}).dropna()
@@ -87,16 +101,26 @@ if not df_all.empty:
         with col1: st.metric("Harga Aktual Minggu Ini", f"Rp {last_p_w:,.2f}")
         with col2: st.metric("Prediksi TCN (Minggu Ini)", f"Rp {pred_w:,.2f}")
 
-        # TOMBOL PREDIKSI MINGGU DEPAN (DIKEMBALIKAN)
-        if st.button('🔮 Jalankan Prediksi TCN (Minggu Depan)'):
-            with st.spinner('Menghitung...'):
-                hasil = predict_stock(model_m, df_w_full['Close'].values, lookback=24)
-                st.success(f"### Estimasi Harga TCN Minggu Depan: Rp {hasil:,.2f}")
+        st.markdown("---")
+        # Historis Akurasi 5 Minggu Terakhir
+        st.write("### 🕒 Historis Akurasi (5 Minggu Terakhir)")
+        history_w = []
+        for i in range(1, 6):
+            t_idx = -i
+            act_val = df_w_full['Close'].iloc[t_idx]
+            act_date = df_w_full.index[t_idx].date()
+            p_val = predict_stock(model_m, df_w_full['Close'].values[:t_idx], lookback=24)
+            history_w.append({"Tanggal": act_date, "Harga Aktual": f"Rp {act_val:,.2f}", "Prediksi TCN": f"Rp {p_val:,.2f}", "Selisih (Rp)": f"{abs(act_val - p_val):,.2f}"})
+        st.table(pd.DataFrame(history_w))
+
+        if st.button('Jalankan Prediksi TCN (Minggu Depan)'):
+            hasil = predict_stock(model_m, df_w_full['Close'].values, lookback=24)
+            st.success(f"### Estimasi Harga TCN Minggu Depan: Rp {hasil:,.2f}")
 
         with st.expander("Lihat Data Historis Mingguan Lengkap (OHLCV)"):
             st.dataframe(df_w_full.sort_index(ascending=False), use_container_width=True)
 
-    # --- TAB 3: BULANAN (TCN) ---
+    # --- TAB 3: BULANAN ---
     with tab3:
         st.subheader("Analisis Perbandingan & Prediksi Bulanan (TCN)")
         df_m_full = df_all.resample('ME').agg({'Open':'first','High':'max','Low':'min','Close':'last','Volume':'sum'}).dropna()
@@ -107,14 +131,24 @@ if not df_all.empty:
         with k1: st.metric("Harga Aktual Bulan Ini", f"Rp {last_p_m:,.2f}")
         with k2: st.metric("Prediksi TCN (Bulan Ini)", f"Rp {pred_m:,.2f}")
 
-        # TOMBOL PREDIKSI BULAN DEPAN (DIKEMBALIKAN)
-        if st.button('🔮 Jalankan Prediksi TCN (Bulan Depan)'):
-            with st.spinner('Menghitung...'):
-                hasil = predict_stock(model_b, df_m_full['Close'].values, lookback=12)
-                st.success(f"### Estimasi Harga TCN Bulan Depan: Rp {hasil:,.2f}")
+        st.markdown("---")
+        # Historis Akurasi 5 Bulan Terakhir
+        st.write("### 🕒 Historis Akurasi (5 Bulan Terakhir)")
+        history_m = []
+        for i in range(1, 6):
+            t_idx = -i
+            act_val = df_m_full['Close'].iloc[t_idx]
+            act_date = df_m_full.index[t_idx].date()
+            p_val = predict_stock(model_b, df_m_full['Close'].values[:t_idx], lookback=12)
+            history_m.append({"Tanggal": act_date, "Harga Aktual": f"Rp {act_val:,.2f}", "Prediksi TCN": f"Rp {p_val:,.2f}", "Selisih (Rp)": f"{abs(act_val - p_val):,.2f}"})
+        st.table(pd.DataFrame(history_m))
+
+        if st.button('Jalankan Prediksi TCN (Bulan Depan)'):
+            hasil = predict_stock(model_b, df_m_full['Close'].values, lookback=12)
+            st.success(f"### Estimasi Harga TCN Bulan Depan: Rp {hasil:,.2f}")
 
         with st.expander("Lihat Data Historis Bulanan Lengkap (OHLCV)"):
             st.dataframe(df_m_full.sort_index(ascending=False), use_container_width=True)
 
 else:
-    st.warning("Gagal mengambil data.")
+    st.warning("Gagal mengambil data dari Yahoo Finance.")
