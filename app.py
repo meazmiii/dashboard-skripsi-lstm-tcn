@@ -18,16 +18,31 @@ now_jkt = datetime.now(tz_jkt)
 
 st.title("🚀 Dashboard Analisis Saham BBCA (LSTM & TCN)")
 
-# --- Format Jam Bersih (Backticks) SEJAJAR ---
+# --- PERBAIKAN: Jam & Tanggal Sejajar (Gaya Backticks) Ukuran Lebih Besar ---
 col_jam, col_tgl = st.columns([1, 1])
 with col_jam:
-    st.write(f"### **Waktu Sistem (Real-time):** `{now_jkt.strftime('%H:%M:%S')}` **WIB**")
+    # Menggunakan font-size lebih besar (45px)
+    st.markdown(f"## **Waktu Sistem:** <span style='font-size: 45px;'>`{now_jkt.strftime('%H:%M:%S')}`</span> **WIB**", unsafe_allow_html=True)
 with col_tgl:
-    st.markdown(f"<div style='text-align: right;'><h3><b>Tanggal:</b> <code>{now_jkt.strftime('%d-%m-%Y')}</code></h3></div>", unsafe_allow_html=True)
+    # Menggunakan font-size lebih besar (45px) dan rata kanan
+    st.markdown(f"<div style='text-align: right;'>## <b>Tanggal:</b> <span style='font-size: 45px;'><code>{now_jkt.strftime('%d-%m-%Y')}</code></span></div>", unsafe_allow_html=True)
 
 st.markdown("---")
 
-# 2. Fungsi Load Model & Data (Cached)
+# CSS Tambahan untuk memastikan tabel tidak gelap di semua tab
+st.markdown("""
+    <style>
+    .stDataFrame div[data-testid="stTable"] {
+        color: white !important;
+    }
+    /* Memaksa teks dalam dataframe agar selalu putih/terang */
+    [data-testid="stTable"] td {
+        color: white !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# 2. Fungsi Load Model & Data
 @st.cache_resource
 def load_models():
     m_harian = load_model('Tuned_LSTM_Harian_U64_LR0.001_KN.h5', compile=False)
@@ -57,7 +72,7 @@ def predict_stock(model, data, lookback):
     prediction_scaled = model.predict(last_sequence)
     return scaler.inverse_transform(prediction_scaled)[0][0]
 
-# --- CALLBACK UNTUK TOMBOL PREDIKSI ---
+# --- CALLBACK UNTUK TOMBOL ---
 def run_pred_h():
     st.session_state.res_h = predict_stock(model_h, df_all['Close'].dropna().values, 60)
 
@@ -71,6 +86,7 @@ if not df_all.empty:
     close_series = df_all['Close'].dropna()
     tab1, tab2, tab3 = st.tabs(["📅 Harian (LSTM)", "🗓️ Mingguan (TCN)", "📊 Bulanan (TCN)"])
 
+    # --- TAB 1: HARIAN ---
     with tab1:
         st.subheader("Analisis Perbandingan & Prediksi Harian (LSTM)")
         last_p = float(close_series.iloc[-1])
@@ -98,9 +114,10 @@ if not df_all.empty:
         if 'res_h' in st.session_state:
             st.success(f"### Estimasi Harga LSTM Besok: Rp {st.session_state.res_h:,.2f}")
 
-        with st.expander("Lihat Data Historis Harian Lengkap (OHLCV)"):
+        with st.expander("Lihat Data Historis Harian Lengkap"):
             st.dataframe(df_all.sort_index(ascending=False), use_container_width=True)
 
+    # --- TAB 2: MINGGUAN ---
     with tab2:
         st.subheader("Analisis Perbandingan & Prediksi Mingguan (TCN)")
         df_w = df_all.resample('W-MON').agg({'Open':'first','High':'max','Low':'min','Close':'last','Volume':'sum'}).dropna()
@@ -115,9 +132,10 @@ if not df_all.empty:
         if 'res_w' in st.session_state:
             st.success(f"### Estimasi Harga TCN Minggu Depan: Rp {st.session_state.res_w:,.2f}")
 
-        with st.expander("Lihat Data Historis Mingguan Lengkap (OHLCV)"):
+        with st.expander("Lihat Data Historis Mingguan Lengkap"):
             st.dataframe(df_w.sort_index(ascending=False), use_container_width=True)
 
+    # --- TAB 3: BULANAN ---
     with tab3:
         st.subheader("Analisis Perbandingan & Prediksi Bulanan (TCN)")
         df_m = df_all.resample('ME').agg({'Open':'first','High':'max','Low':'min','Close':'last','Volume':'sum'}).dropna()
@@ -132,10 +150,10 @@ if not df_all.empty:
         if 'res_m' in st.session_state:
             st.success(f"### Estimasi Harga TCN Bulan Depan: Rp {st.session_state.res_m:,.2f}")
 
-        with st.expander("Lihat Data Historis Bulanan Lengkap (OHLCV)"):
+        with st.expander("Lihat Data Historis Bulanan Lengkap"):
             st.dataframe(df_m.sort_index(ascending=False), use_container_width=True)
 
-# --- Copyright Cerah dengan Link Instagram Aktif ---
+# --- Copyright Cerah ---
 st.markdown("<br><br>", unsafe_allow_html=True)
 st.markdown(
     """
