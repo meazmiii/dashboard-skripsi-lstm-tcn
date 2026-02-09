@@ -11,29 +11,33 @@ from streamlit_autorefresh import st_autorefresh
 # 1. Konfigurasi Halaman
 st.set_page_config(page_title="Dashboard Skripsi BBCA", layout="wide")
 
-# --- BAGIAN JAM (Hanya bagian ini yang di-refresh) ---
-# Menggunakan st.empty() agar refresh jam tidak mengganggu tabel di bawahnya
-header_container = st.container()
-with header_container:
-    st.title("🚀 Dashboard Analisis Saham BBCA (LSTM & TCN)")
-    clock_placeholder = st.empty()
-
-# Auto-refresh diletakkan di bawah judul untuk memicu pembaruan jam
+# Jam Real-time (Hanya bagian ini yang di-refresh secara cepat)
 st_autorefresh(interval=1000, key="clock_refresh")
-
 tz_jkt = pytz.timezone('Asia/Jakarta')
 now_jkt = datetime.now(tz_jkt)
 
-# Update teks jam di dalam placeholder
-with clock_placeholder.container():
-    st.write(f"## **Waktu Sistem (Real-time):** `{now_jkt.strftime('%H:%M:%S')}` **WIB**")
-    st.write(f"### **Tanggal:** `{now_jkt.strftime('%d-%m-%Y')}`")
-    st.markdown("---")
+# Header & Jam Sejajar
+st.title("🚀 Dashboard Analisis Saham BBCA (LSTM & TCN)")
 
-# 2. Fungsi Load Model & Data (Gunakan Cache agar tidak berkedip)
+# --- PERBAIKAN: Waktu dan Tanggal Sejajar & Ukuran Besar ---
+st.markdown(
+    f"""
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0px;">
+        <div style="font-size: 35px; font-weight: bold; color: white;">
+            🕒 {now_jkt.strftime('%H:%M:%S')} <span style="font-size: 20px;">WIB</span>
+        </div>
+        <div style="font-size: 35px; font-weight: bold; color: white;">
+            📅 {now_jkt.strftime('%d-%m-%Y')}
+        </div>
+    </div>
+    <hr style="margin-top: 0px; margin-bottom: 20px; border: 1px solid #333;">
+    """, 
+    unsafe_allow_html=True
+)
+
+# 2. Fungsi Load Model & Data (Gunakan Cache agar stabil)
 @st.cache_resource
 def load_models():
-    # Model arsitektur LSTM dan TCN untuk prediksi saham BBCA
     m_harian = load_model('Tuned_LSTM_Harian_U64_LR0.001_KN.h5', compile=False)
     m_mingguan = load_model('Tuned_TCN_Mingguan_U64_LR0.001_K3.h5', compile=False)
     m_bulanan = load_model('Tuned_TCN_Bulanan_U128_LR0.001_K3.h5', compile=False)
@@ -143,14 +147,16 @@ if not df_all.empty:
         with st.expander("Lihat Data Historis Bulanan Lengkap (OHLCV)"):
             st.dataframe(df_m.sort_index(ascending=False), use_container_width=True)
 
-# --- Footer Copyright ---
-st.markdown("---")
+# --- PERBAIKAN: Copyright Lebih Terang & Jelas ---
+st.markdown("<br><br>", unsafe_allow_html=True)
 st.markdown(
     """
-    <div style="text-align: center; color: #777777; padding: 10px;">
-        <p style="margin:0;">© 2026 Skripsi Informatika - Universitas AMIKOM Yogyakarta</p>
-        <p style="margin:0; font-weight: bold; color: #AAAAAA;">AZMI AZIZ | 22.11.4903</p>
-        <p style="margin:0;">Instagram: <a href="https://instagram.com/_azmiazzz" style="color: #00AAFF; text-decoration: none;">@_azmiazzz</a></p>
+    <div style="text-align: center; background-color: #262730; padding: 25px; border-radius: 15px; border-top: 2px solid #333;">
+        <p style="margin:0; font-size: 14px; color: #CCCCCC;">© 2026 Skripsi Informatika - Universitas AMIKOM Yogyakarta</p>
+        <p style="margin:5px 0; font-size: 20px; font-weight: bold; color: #FFFFFF; letter-spacing: 1px;">AZMI AZIZ | 22.11.4903</p>
+        <p style="margin:0; font-size: 16px; color: #00AAFF; font-weight: 500;">
+            Instagram: <a href="https://instagram.com/_azmiazzz" target="_blank" style="color: #00AAFF; text-decoration: none;">@_azmiazzz</a>
+        </p>
     </div>
     """,
     unsafe_allow_html=True
