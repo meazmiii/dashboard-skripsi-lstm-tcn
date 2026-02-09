@@ -2,6 +2,7 @@ streamlit
 yfinance
 pandas
 numpy
-tensorflow-cpu
+tensorflow
 scikit-learn
-keras-tcn  # Tambahkan ini jika kamu menggunakan library khusus untuk layer TCN
+pytz
+streamlit-autorefresh
