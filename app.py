@@ -60,18 +60,41 @@ def load_models():
     m_bulanan = load_model('Tuned_TCN_Bulanan_U128_LR0.001_K3.h5', compile=False)
     return m_harian, m_mingguan, m_bulanan
 
-@st.cache_data(ttl=3600)
-def get_data():
-    df = yf.download("BBCA.JK", period='5y')
-    if isinstance(df.columns, pd.MultiIndex):
-        df.columns = df.columns.get_level_values(0)
-    return df
+# --- DI BAGIAN ATAS (Setelah Import) ---
+ticker = "BBCA.JK"
 
+@st.cache_data(ttl=3600) # Data hanya akan di-download ulang setiap 1 jam
+def get_data():
+    try:
+        # Mencoba download data terbaru
+        df = yf.download(ticker, period='5y', progress=False)
+        
+        if df.empty:
+            raise ValueError("Yahoo Finance mengembalikan data kosong (Rate Limit).")
+            
+        if isinstance(df.columns, pd.MultiIndex):
+            df.columns = df.columns.get_level_values(0)
+            
+        # Opsional: Simpan ke lokal setiap kali berhasil download sebagai cadangan
+        df.to_csv("bbca_fallback.csv")
+        return df
+        
+    except Exception as e:
+        # JIKA GAGAL: Baca dari file CSV lokal agar dashboard tidak crash
+        st.warning(f"Koneksi API terlimit, menggunakan data cadangan lokal. Error: {e}")
+        try:
+            df_fallback = pd.read_csv("bbca_fallback.csv", index_col=0, parse_dates=True)
+            return df_fallback
+        except:
+            st.error("Data cadangan lokal tidak ditemukan!")
+            return pd.DataFrame()
+
+# --- DI BAGIAN UTAMA ---
 try:
     model_h, model_m, model_b = load_models()
-    df_all = get_data()
+    df_all = get_data() # Memanggil fungsi yang sudah diproteksi
 except Exception as e:
-    st.error(f"Terjadi kesalahan: {e}")
+    st.error(f"Gagal memuat model/data: {e}")
 
 # 3. Fungsi Prediksi
 def predict_stock(model, data, lookback):
@@ -179,6 +202,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 
