@@ -163,12 +163,13 @@ if not df_all.empty:
 
         with st.expander("Lihat Data Historis Bulanan Lengkap"):
             st.dataframe(df_m.sort_index(ascending=False), use_container_width=True)
-    try:
+try:
     df_ext = yf.download(ticker, start='2025-12-01', end='2026-02-02', progress=False)
+    
     if df_ext.empty:
-        st.error("Gagal mengambil data dari Yahoo Finance. Silakan coba refresh halaman beberapa saat lagi.")
+        st.error("Data tidak ditemukan atau kena Rate Limit. Coba lagi nanti.")
 except Exception as e:
-    st.error(f"Terjadi kesalahan: {e}")
+    st.error(f"Terjadi error: {e}")
 
 # --- Copyright Cerah & Terang ---
 st.markdown("<br><br>", unsafe_allow_html=True)
@@ -184,6 +185,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 
