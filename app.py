@@ -63,7 +63,7 @@ def load_models():
 # --- DI BAGIAN ATAS (Setelah Import) ---
 ticker = "BBCA.JK"
 
-@st.cache_data(ttl=3600) # Data hanya akan di-download ulang setiap 1 jam
+@st.cache_data(ttl=600) # Data hanya akan di-download ulang setiap 10mnt
 def get_data():
     try:
         # Mencoba download data terbaru
@@ -202,6 +202,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 
