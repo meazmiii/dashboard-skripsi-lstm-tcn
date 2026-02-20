@@ -79,8 +79,8 @@ if not df_all.empty:
             paths = {
                 "LSTM Baseline": "models/baseline/Baseline_LSTM_Harian.h5",
                 "TCN Baseline": "models/baseline/Baseline_TCN_Harian.h5",
-                "LSTM Tuned": "Tuned_LSTM_Harian_U64_LR0.001_KN.h5", # Sesuaikan path file kamu
-                "TCN Tuned": "models/tuned/Tuned_TCN_Harian_Best.h5"
+                "LSTM Tuned": "models/tuned/Tuned_LSTM_Harian_U64_LR0.001_KN.h5",
+                "TCN Tuned": "models/tuned/Tuned_TCN_Harian_U128_LR0.001_K2.h5"
             }
             curr_model = get_model(paths[model_h])
             close_s = df_all['Close'].dropna()
@@ -120,8 +120,8 @@ if not df_all.empty:
             paths_w = {
                 "LSTM Baseline": "models/baseline/Baseline_LSTM_Mingguan.h5",
                 "TCN Baseline": "models/baseline/Baseline_TCN_Mingguan.h5",
-                "LSTM Tuned": "models/tuned/Tuned_LSTM_Mingguan_Best.h5",
-                "TCN Tuned": "Tuned_TCN_Mingguan_U64_LR0.001_K3.h5"
+                "LSTM Tuned": "models/tuned/Tuned_LSTM_Mingguan_U64_LR0.001_KN.h5",
+                "TCN Tuned": "models/tuned/Tuned_TCN_Mingguan_U64_LR0.001_K3.h5"
             }
             curr_model_w = get_model(paths_w[model_w])
             
@@ -153,8 +153,8 @@ if not df_all.empty:
             paths_m = {
                 "LSTM Baseline": "models/baseline/Baseline_LSTM_Bulanan.h5",
                 "TCN Baseline": "models/baseline/Baseline_TCN_Bulanan.h5",
-                "LSTM Tuned": "models/tuned/Tuned_LSTM_Bulanan_Best.h5",
-                "TCN Tuned": "Tuned_TCN_Bulanan_U128_LR0.001_K3.h5"
+                "LSTM Tuned": "models/tuned/Tuned_LSTM_Bulanan_U128_LR0.001_KN.h5",
+                "TCN Tuned": "models/tuned/Tuned_TCN_Bulanan_U128_LR0.001_K3.h5"
             }
             curr_model_m = get_model(paths_m[model_m])
             
@@ -179,3 +179,4 @@ if not df_all.empty:
 # --- FOOTER ---
 st.markdown("<br><hr>", unsafe_allow_html=True)
 st.markdown(f"<div style='text-align: center;'><b>AZMI AZIZ | 22.11.4903</b><br>© 2026 Universitas AMIKOM Yogyakarta</div>", unsafe_allow_html=True)
+
