@@ -214,17 +214,19 @@ if not df_all.empty:
             st.dataframe(df_m_full.sort_index(ascending=False), use_container_width=True)
 
 # --- Copyright ---
-st.markdown("<br><br>", unsafe_allow_html=True)
 st.markdown(
     """
-    <div style="text-align: center; background-color: #262730; padding: 20px; border-radius: 10px; border: 1px solid #444;">
+    <div class="footer-box">
         <p style="margin:0; font-size: 14px; color: #DDDDDD;">© 2026 Skripsi Informatika - Universitas AMIKOM Yogyakarta</p>
-        <p style="margin:5px 0; font-size: 18px; font-weight: bold; color: #FFFFFF;">AZMI AZIZ | 22.11.4903</p>
-        <p style="margin:0; font-size: 15px;">
-            <a href="https://www.instagram.com/_azmiazzz/?hl=id" target="_blank" style="color: #00AAFF; text-decoration: none; font-weight: bold;">Instagram: @_azmiazzz</a>
+        <p style="margin:8px 0; font-size: 20px; font-weight: bold; color: #FFFFFF; letter-spacing: 1px;">AZMI AZIZ | 22.11.4903</p>
+        <p style="margin:0; font-size: 16px;">
+            <a href="https://www.instagram.com/_azmiazzz/?hl=id" target="_blank" style="color: #00AAFF; text-decoration: none; font-weight: bold;">
+                📸 Instagram: @_azmiazzz
+            </a>
         </p>
     </div>
     """,
     unsafe_allow_html=True
 )
+
 
