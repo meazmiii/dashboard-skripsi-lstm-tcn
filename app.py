@@ -162,7 +162,7 @@ if not df_all.empty:
         else:
             st.info("💡 Pilih salah satu model untuk melihat perbandingan mingguan.")
     
-        with st.expander("Lihat Data Historis Mingguan Lengkap (OHLCV)"):
+        with st.expander("Lihat Data Historis Mingguan Lengkap"):
             # Tampilkan DataFrame lengkap yang sudah di-resample
             st.dataframe(df_w_full.sort_index(ascending=False), use_container_width=True)
 
@@ -209,7 +209,7 @@ if not df_all.empty:
         else:
             st.info("💡 Pilih salah satu model untuk melihat perbandingan bulanan.")
     
-        with st.expander("Lihat Data Historis Bulanan Lengkap (OHLCV)"):
+        with st.expander("Lihat Data Historis Bulanan Lengkap"):
             # Tampilkan DataFrame lengkap yang sudah di-resample
             st.dataframe(df_m_full.sort_index(ascending=False), use_container_width=True)
 
@@ -226,3 +226,4 @@ st.markdown(f"""
         </a>
     </div>
 """, unsafe_allow_html=True)
+
