@@ -190,7 +190,7 @@ if not df_all.empty:
             paths_m = {
                 "LSTM Baseline": "models/baseline/Baseline_LSTM_Bulanan.h5",
                 "TCN Baseline": "models/baseline/Baseline_TCN_Bulanan.h5",
-                "LSTM Tuned": "models/tuned/Tuned_LSTM_Bulanan_U128_LR0.001_KN.h5",
+                "LSTM Tuned": "models/tuned/Tuned_LSTM_Bulanan_U128_LR0.0001_KN.h5",
                 "TCN Tuned": "models/tuned/Tuned_TCN_Bulanan_U128_LR0.001_K3.h5"
             }
             curr_model_m = get_model(paths_m[model_m])
@@ -226,4 +226,5 @@ st.markdown(f"""
         </a>
     </div>
 """, unsafe_allow_html=True)
+
 
