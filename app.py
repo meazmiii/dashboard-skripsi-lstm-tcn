@@ -82,7 +82,7 @@ if not df_all.empty:
             st.metric("Harga Aktual Terakhir", f"Rp {last_p:,.2f}")
         
         # RADIO MODEL (BREAKDOWN)
-        model_h = st.radio("Pilih Model Harian:", ["LSTM Baseline", "TCN Baseline", "LSTM Tuned", "TCN Tuned"], index=None, horizontal=True)
+        model_h = st.radio("Pilih Model Harian:", ["LSTM Standar", "TCN Standar", "LSTM Khusus", "TCN Khusus"], index=None, horizontal=True)
         
         if model_h:
             paths = {
@@ -135,7 +135,7 @@ if not df_all.empty:
         cw1, cw2 = st.columns(2)
         with cw1: st.metric("Harga Aktual Minggu Ini", f"Rp {last_p_w:,.2f}")
             
-        model_w = st.radio("Pilih Model Mingguan:", ["LSTM Baseline", "TCN Baseline", "LSTM Tuned", "TCN Tuned"], index=None, horizontal=True)
+        model_w = st.radio("Pilih Model Mingguan:", ["LSTM Standar", "TCN Standar", "LSTM Khusus", "TCN Khusus"], index=None, horizontal=True)
         
         if model_w:
             paths_w = {
@@ -184,7 +184,7 @@ if not df_all.empty:
         cm1, cm2 = st.columns(2)
         with cm1: st.metric("Harga Aktual Bulan Ini", f"Rp {last_p_m:,.2f}")
             
-        model_m = st.radio("Pilih Model Bulanan:", ["LSTM Baseline", "TCN Baseline", "LSTM Tuned", "TCN Tuned"], index=None, horizontal=True)
+        model_m = st.radio("Pilih Model Bulanan:", ["LSTM Standar", "TCN Standar", "LSTM Khusus", "TCN Khusus"], index=None, horizontal=True)
         
         if model_m:
             paths_m = {
@@ -226,5 +226,6 @@ st.markdown(f"""
         </a>
     </div>
 """, unsafe_allow_html=True)
+
 
 
