@@ -68,31 +68,33 @@ df_all = get_data_manual()
 
 # 3. Struktur Dashboard Utama
 if not df_all.empty:
-with tab_comp:
+# 3. Struktur Dashboard Utama
+if not df_all.empty:
+    # 1. Inisialisasi Tab
+    tab_comp, tab1, tab2, tab3 = st.tabs(["📊 Perbandingan Prediksi", "📅 Harian", "🗓️ Mingguan", "📊 Bulanan"])
+
+    # --- ISI TAB KOMPARASI (12 MODEL + HARGA AKTUAL) ---
+    with tab_comp:
         st.subheader("🚀 Komparasi Prediksi Harga: 12 Skenario Model")
         
-        # --- AMBIL DATA AKTUAL TERAKHIR ---
-        # 1. Harian
-        last_price_h = float(df_all['Close'].dropna().iloc[-1])
+        # Penyiapan Data & Harga Aktual
+        # Harian
+        df_h = df_all['Close'].dropna()
+        last_h = float(df_h.iloc[-1])
         
-        # 2. Mingguan
+        # Mingguan
         df_w_tmp = df_all['Close'].resample('W-MON').last().dropna()
-        last_price_w = float(df_w_tmp.iloc[-1])
+        last_w = float(df_w_tmp.iloc[-1])
         
-        # 3. Bulanan
+        # Bulanan
         df_m_tmp = df_all['Close'].resample('ME').last().dropna()
-        last_price_m = float(df_m_tmp.iloc[-1])
+        last_m = float(df_m_tmp.iloc[-1])
 
-        # Ambil data input untuk prediksi
-        close_h = df_all['Close'].dropna().values
-        close_w = df_w_tmp.values
-        close_m = df_m_tmp.values
-
-        # Konfigurasi Model
+        # Konfigurasi Dictionary agar Loop Rapi
         tfs_config = {
             "HARIAN": {
-                "data": close_h, "lb": 60, "icon": "📅", "actual": last_price_h,
-                "models": [
+                "data": df_h.values, "last": last_h, "lb": 60, "icon": "📅",
+                "mods": [
                     ("LSTM Standar", "models/baseline/Baseline_LSTM_Harian.h5"),
                     ("TCN Standar", "models/baseline/Baseline_TCN_Harian.h5"),
                     ("LSTM Khusus", "models/tuned/Tuned_LSTM_Harian_U64_LR0.001_KN.h5"),
@@ -100,8 +102,8 @@ with tab_comp:
                 ]
             },
             "MINGGUAN": {
-                "data": close_w, "lb": 24, "icon": "🗓️", "actual": last_price_w,
-                "models": [
+                "data": df_w_tmp.values, "last": last_w, "lb": 24, "icon": "🗓️",
+                "mods": [
                     ("LSTM Standar", "models/baseline/Baseline_LSTM_Mingguan.h5"),
                     ("TCN Standar", "models/baseline/Baseline_TCN_Mingguan.h5"),
                     ("LSTM Khusus", "models/tuned/Tuned_LSTM_Mingguan_U64_LR0.001_KN.h5"),
@@ -109,8 +111,8 @@ with tab_comp:
                 ]
             },
             "BULANAN": {
-                "data": close_m, "lb": 12, "icon": "📊", "actual": last_price_m,
-                "models": [
+                "data": df_m_tmp.values, "last": last_m, "lb": 12, "icon": "📊",
+                "mods": [
                     ("LSTM Standar", "models/baseline/Baseline_LSTM_Bulanan.h5"),
                     ("TCN Standar", "models/baseline/Baseline_TCN_Bulanan.h5"),
                     ("LSTM Khusus", "models/tuned/Tuned_LSTM_Bulanan_U128_LR0.0001_KN.h5"),
@@ -119,41 +121,37 @@ with tab_comp:
             }
         }
 
-        # Render 3 Kolom
-        cols = st.columns(3)
+        # Render Kolom Utama
+        c_main = st.columns(3)
         
-        for i, (name, config) in enumerate(tfs_config.items()):
-            with cols[i]:
-                # Membuat kotak kartu menyatu
+        for idx, (tf_name, conf) in enumerate(tfs_config.items()):
+            with c_main[idx]:
                 with st.container(border=True):
-                    st.markdown(f"### {config['icon']} {name}")
+                    st.markdown(f"### {conf['icon']} {tf_name}")
                     
-                    # --- HIGHLIGHT HARGA AKTUAL (GOLD/YELLOW BOX) ---
+                    # Box Harga Aktual (Highlight Emas)
                     st.markdown(f"""
-                        <div style="background-color: rgba(255, 215, 0, 0.15); padding: 12px; border-radius: 10px; border: 1px solid gold; margin-bottom: 15px; text-align: center;">
-                            <span style="color: gold; font-size: 12px; font-weight: bold; text-transform: uppercase;">Harga Aktual Terakhir</span><br>
-                            <span style="color: #FFFFFF; font-size: 20px; font-weight: bold;">Rp {config['actual']:,.2f}</span>
+                        <div style="background-color: rgba(255, 215, 0, 0.1); padding: 10px; border-radius: 10px; border: 1px solid gold; text-align: center; margin-bottom: 15px;">
+                            <p style="margin:0; color: gold; font-size: 11px; font-weight: bold;">HARGA AKTUAL</p>
+                            <p style="margin:0; color: white; font-size: 20px; font-weight: bold;">Rp {conf['last']:,.2f}</p>
                         </div>
                     """, unsafe_allow_html=True)
                     
                     st.write("---")
-                    st.caption("Hasil Prediksi Model:")
                     
-                    for m_name, m_path in config['models']:
+                    # List Prediksi Model
+                    for m_name, m_path in conf['mods']:
                         try:
-                            # Proses Hitung
                             m_obj = get_model(m_path)
-                            val = predict_stock(m_obj, config['data'], config['lb'])
+                            p_val = predict_stock(m_obj, conf['data'], conf['lb'])
                             
-                            # Tampilan per baris model
-                            c_left, c_right = st.columns([1.2, 1])
-                            with c_left:
-                                st.markdown(f"<span style='color:#AAA; font-size:14px;'>{m_name}</span>", unsafe_allow_html=True)
-                            with c_right:
-                                st.markdown(f"<div style='text-align: right; color:#00FFCC; font-weight:bold; font-family:monospace; font-size:15px;'>Rp {val:,.2f}</div>", unsafe_allow_html=True)
+                            # Layout baris: Nama Model | Harga Prediksi
+                            row_cols = st.columns([1.2, 1])
+                            row_cols[0].markdown(f"<p style='color:#AAA; font-size:13px; margin:0;'>{m_name}</p>", unsafe_allow_html=True)
+                            row_cols[1].markdown(f"<p style='color:#00FFCC; font-weight:bold; font-family:monospace; font-size:15px; margin:0; text-align:right;'>Rp {p_val:,.2f}</p>", unsafe_allow_html=True)
                         except:
-                            st.error(f"Error {m_name}")
-                        st.write("")
+                            st.error(f"Error: {m_name}")
+                        st.write("") # Spacer antar baris
     # --- TAB 1: HARIAN (Lookback: 60) ---
     with tab1:
         st.subheader("Analisis Perbandingan & Prediksi Harian")
@@ -310,6 +308,7 @@ st.markdown(f"""
         </a>
     </div>
 """, unsafe_allow_html=True)
+
 
 
 
