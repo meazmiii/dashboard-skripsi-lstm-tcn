@@ -74,56 +74,12 @@ if not df_all.empty:
     with tab_comp:
         st.subheader("🚀 Komparasi Prediksi Harga: 12 Skenario Model")
         
-        # --- CSS UNTUK TAMPILAN KARTU YANG MENYATU ---
-        st.markdown("""
-            <style>
-                .card-container {
-                    background-color: #1E1E1E;
-                    border-radius: 15px;
-                    padding: 20px;
-                    border: 1px solid #333;
-                    box-shadow: 2px 4px 10px rgba(0,0,0,0.5);
-                    margin-bottom: 25px;
-                    min-height: 350px;
-                }
-                .card-title {
-                    font-size: 22px;
-                    font-weight: bold;
-                    color: #00AAFF;
-                    border-bottom: 2px solid #00AAFF;
-                    padding-bottom: 12px;
-                    margin-bottom: 20px;
-                    text-align: center;
-                }
-                .model-box {
-                    display: flex;
-                    justify-content: space-between;
-                    background: rgba(255,255,255,0.05);
-                    padding: 12px;
-                    border-radius: 10px;
-                    margin-bottom: 10px;
-                    border: 1px solid rgba(255,255,255,0.1);
-                }
-                .model-label {
-                    color: #CCCCCC;
-                    font-size: 14px;
-                    font-weight: 500;
-                }
-                .price-text {
-                    color: #00FFCC;
-                    font-weight: bold;
-                    font-family: 'Courier New', monospace;
-                    font-size: 18px;
-                }
-            </style>
-        """, unsafe_allow_html=True)
-
-        # Ambil data input
+        # Ambil data input sekali saja
         close_h = df_all['Close'].dropna().values
         close_w = df_all['Close'].resample('W-MON').last().dropna().values
         close_m = df_all['Close'].resample('ME').last().dropna().values
 
-        # Mapping Config (Sesuai 12 model kamu)
+        # Konfigurasi Model
         tfs_config = {
             "HARIAN": {"data": close_h, "lb": 60, "icon": "📅", "models": [
                 ("LSTM Standar", "models/baseline/Baseline_LSTM_Harian.h5"),
@@ -150,28 +106,26 @@ if not df_all.empty:
         
         for i, (name, config) in enumerate(tfs_config.items()):
             with cols[i]:
-                # --- PROSES HITUNG DULU SEMUA HARGA ---
-                html_content = f'<div class="card-container"><div class="card-title">{config["icon"]} {name}</div>'
-                
-                for m_name, m_path in config['models']:
-                    try:
-                        m_obj = get_model(m_path)
-                        val = predict_stock(m_obj, config['data'], config['lb'])
-                        
-                        # Gabungkan baris model ke dalam satu string HTML
-                        html_content += f"""
-                            <div class="model-box">
-                                <span class="model-label">{m_name}</span>
-                                <span class="price-text">Rp {val:,.2f}</span>
-                            </div>
-                        """
-                    except:
-                        html_content += f'<div class="model-box"><span class="model-label">{m_name}</span><span style="color:red;">Error</span></div>'
-                
-                html_content += "</div>" # Tutup container
-                
-                # --- TAMPILKAN SEKALI JALAN ---
-                st.markdown(html_content, unsafe_allow_html=True)
+                # Membuat kotak kartu menggunakan border=True agar rapi dan menyatu
+                with st.container(border=True):
+                    st.markdown(f"### {config['icon']} {name}")
+                    st.write("---")
+                    
+                    for m_name, m_path in config['models']:
+                        try:
+                            # Proses Hitung
+                            m_obj = get_model(m_path)
+                            val = predict_stock(m_obj, config['data'], config['lb'])
+                            
+                            # Tampilan per baris model (Gunakan kolom kecil di dalam kartu)
+                            c_left, c_right = st.columns([1.2, 1])
+                            with c_left:
+                                st.markdown(f"<span style='color:#AAA; font-size:14px;'>{m_name}</span>", unsafe_allow_html=True)
+                            with c_right:
+                                st.markdown(f"<span style='color:#00FFCC; font-weight:bold; font-family:monospace; font-size:16px;'>Rp {val:,.2f}</span>", unsafe_allow_html=True)
+                        except:
+                            st.error(f"Error {m_name}")
+                        st.write("") # Spasi antar baris
     # --- TAB 1: HARIAN (Lookback: 60) ---
     with tab1:
         st.subheader("Analisis Perbandingan & Prediksi Harian")
@@ -328,6 +282,7 @@ st.markdown(f"""
         </a>
     </div>
 """, unsafe_allow_html=True)
+
 
 
 
