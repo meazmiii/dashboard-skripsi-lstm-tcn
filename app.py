@@ -86,10 +86,10 @@ if not df_all.empty:
         
         if model_h:
             paths = {
-                "LSTM Baseline": "models/baseline/Baseline_LSTM_Harian.h5",
-                "TCN Baseline": "models/baseline/Baseline_TCN_Harian.h5",
-                "LSTM Tuned": "models/tuned/Tuned_LSTM_Harian_U64_LR0.001_KN.h5",
-                "TCN Tuned": "models/tuned/Tuned_TCN_Harian_U128_LR0.001_K2.h5"
+                "LSTM Standar": "models/baseline/Baseline_LSTM_Harian.h5",
+                "TCN Standar": "models/baseline/Baseline_TCN_Harian.h5",
+                "LSTM Khusus": "models/tuned/Tuned_LSTM_Harian_U64_LR0.001_KN.h5",
+                "TCN Khusus": "models/tuned/Tuned_TCN_Harian_U128_LR0.001_K2.h5"
             }
             curr_model = get_model(paths[model_h])
             pred_p = predict_stock(curr_model, close_s.values, 60)
@@ -139,10 +139,10 @@ if not df_all.empty:
         
         if model_w:
             paths_w = {
-                "LSTM Baseline": "models/baseline/Baseline_LSTM_Mingguan.h5",
-                "TCN Baseline": "models/baseline/Baseline_TCN_Mingguan.h5",
-                "LSTM Tuned": "models/tuned/Tuned_LSTM_Mingguan_U64_LR0.001_KN.h5",
-                "TCN Tuned": "models/tuned/Tuned_TCN_Mingguan_U64_LR0.001_K3.h5"
+                "LSTM Standar": "models/baseline/Baseline_LSTM_Mingguan.h5",
+                "TCN Standar": "models/baseline/Baseline_TCN_Mingguan.h5",
+                "LSTM Khusus": "models/tuned/Tuned_LSTM_Mingguan_U64_LR0.001_KN.h5",
+                "TCN Khusus": "models/tuned/Tuned_TCN_Mingguan_U64_LR0.001_K3.h5"
             }
             curr_model_w = get_model(paths_w[model_w])
             # Prediksi tetap pakai kolom Close saja
@@ -188,10 +188,10 @@ if not df_all.empty:
         
         if model_m:
             paths_m = {
-                "LSTM Baseline": "models/baseline/Baseline_LSTM_Bulanan.h5",
-                "TCN Baseline": "models/baseline/Baseline_TCN_Bulanan.h5",
-                "LSTM Tuned": "models/tuned/Tuned_LSTM_Bulanan_U128_LR0.0001_KN.h5",
-                "TCN Tuned": "models/tuned/Tuned_TCN_Bulanan_U128_LR0.001_K3.h5"
+                "LSTM Standar": "models/baseline/Baseline_LSTM_Bulanan.h5",
+                "TCN Standar": "models/baseline/Baseline_TCN_Bulanan.h5",
+                "LSTM Khusus": "models/tuned/Tuned_LSTM_Bulanan_U128_LR0.0001_KN.h5",
+                "TCN Khusus": "models/tuned/Tuned_TCN_Bulanan_U128_LR0.001_K3.h5"
             }
             curr_model_m = get_model(paths_m[model_m])
             pred_p_m = predict_stock(curr_model_m, df_m_full['Close'].values, 12)
@@ -226,6 +226,7 @@ st.markdown(f"""
         </a>
     </div>
 """, unsafe_allow_html=True)
+
 
 
 
