@@ -68,74 +68,62 @@ df_all = get_data_manual()
 
 # 3. Struktur Dashboard Utama
 if not df_all.empty:
-    # 1. Tambahkan tab_comp di urutan pertama
+   # 1. Tambahkan tab_comp di urutan pertama
     tab_comp, tab1, tab2, tab3 = st.tabs(["📊 Perbandingan Prediksi", "📅 Harian", "🗓️ Mingguan", "📊 Bulanan"])
 
     with tab_comp:
         st.subheader("Komparasi Prediksi Harga: 12 Skenario Model")
-        st.write("Klik tombol di bawah untuk melihat perbandingan hasil prediksi harga dari seluruh model secara bersamaan.")
-        
-        if st.button("🚀 Jalankan Komparasi Seluruh Model"):
-            with st.spinner("Sedang menghitung prediksi dari 12 model..."):
-                # Menyiapkan data untuk masing-masing timeframe
-                close_h = df_all['Close'].dropna().values
-                close_w = df_all['Close'].resample('W-MON').last().dropna().values
-                close_m = df_all['Close'].resample('ME').last().dropna().values
+        st.write("Berikut adalah hasil prediksi harga dari seluruh model (LSTM & TCN) pada setiap timeframe secara real-time.")
 
-                # Dictionary Path Model (12 Model)
-                all_paths = {
-                    "Harian": {
-                        "LSTM Standar": "models/baseline/Baseline_LSTM_Harian.h5",
-                        "TCN Standar": "models/baseline/Baseline_TCN_Harian.h5",
-                        "LSTM Khusus": "models/tuned/Tuned_LSTM_Harian_U64_LR0.001_KN.h5",
-                        "TCN Khusus": "models/tuned/Tuned_TCN_Harian_U128_LR0.001_K2.h5",
-                        "lookback": 60
-                    },
-                    "Mingguan": {
-                        "LSTM Standar": "models/baseline/Baseline_LSTM_Mingguan.h5",
-                        "TCN Standar": "models/baseline/Baseline_TCN_Mingguan.h5",
-                        "LSTM Khusus": "models/tuned/Tuned_LSTM_Mingguan_U64_LR0.001_KN.h5",
-                        "TCN Khusus": "models/tuned/Tuned_TCN_Mingguan_U64_LR0.001_K3.h5",
-                        "lookback": 24
-                    },
-                    "Bulanan": {
-                        "LSTM Standar": "models/baseline/Baseline_LSTM_Bulanan.h5",
-                        "TCN Standar": "models/baseline/Baseline_TCN_Bulanan.h5",
-                        "LSTM Khusus": "models/tuned/Tuned_LSTM_Bulanan_U128_LR0.0001_KN.h5",
-                        "TCN Khusus": "models/tuned/Tuned_TCN_Bulanan_U128_LR0.001_K3.h5",
-                        "lookback": 12
-                    }
-                }
+        # Menyiapkan data input untuk masing-masing timeframe
+        close_h = df_all['Close'].dropna().values
+        close_w = df_all['Close'].resample('W-MON').last().dropna().values
+        close_m = df_all['Close'].resample('ME').last().dropna().values
 
-                results = []
-                # Loop untuk melakukan prediksi
-                for tf, models in all_paths.items():
-                    # Pilih data input berdasarkan timeframe
-                    if tf == "Harian": data_in = close_h
-                    elif tf == "Mingguan": data_in = close_w
-                    else: data_in = close_m
-                    
-                    lb = models['lookback']
-                    
-                    for m_name in ["LSTM Standar", "TCN Standar", "LSTM Khusus", "TCN Khusus"]:
-                        path = models[m_name]
-                        model_obj = get_model(path)
-                        pred = predict_stock(model_obj, data_in, lb)
-                        results.append({
-                            "Timeframe": tf,
-                            "Model": m_name,
-                            "Harga Prediksi": f"Rp {pred:,.2f}"
-                        })
+        # Definisi Model & Path (12 Model)
+        all_configs = [
+            {"tf": "HARIAN", "name": "LSTM Standar", "path": "models/baseline/Baseline_LSTM_Harian.h5", "lb": 60, "data": close_h},
+            {"tf": "HARIAN", "name": "TCN Standar", "path": "models/baseline/Baseline_TCN_Harian.h5", "lb": 60, "data": close_h},
+            {"tf": "HARIAN", "name": "LSTM Khusus", "path": "models/tuned/Tuned_LSTM_Harian_U64_LR0.001_KN.h5", "lb": 60, "data": close_h},
+            {"tf": "HARIAN", "name": "TCN Khusus", "path": "models/tuned/Tuned_TCN_Harian_U128_LR0.001_K2.h5", "lb": 60, "data": close_h},
+            
+            {"tf": "MINGGUAN", "name": "LSTM Standar", "path": "models/baseline/Baseline_LSTM_Mingguan.h5", "lb": 24, "data": close_w},
+            {"tf": "MINGGUAN", "name": "TCN Standar", "path": "models/baseline/Baseline_TCN_Mingguan.h5", "lb": 24, "data": close_w},
+            {"tf": "MINGGUAN", "name": "LSTM Khusus", "path": "models/tuned/Tuned_LSTM_Mingguan_U64_LR0.001_KN.h5", "lb": 24, "data": close_w},
+            {"tf": "MINGGUAN", "name": "TCN Khusus", "path": "models/tuned/Tuned_TCN_Mingguan_U64_LR0.001_K3.h5", "lb": 24, "data": close_w},
+            
+            {"tf": "BULANAN", "name": "LSTM Standar", "path": "models/baseline/Baseline_LSTM_Bulanan.h5", "lb": 12, "data": close_m},
+            {"tf": "BULANAN", "name": "TCN Standar", "path": "models/baseline/Baseline_TCN_Bulanan.h5", "lb": 12, "data": close_m},
+            {"tf": "BULANAN", "name": "LSTM Khusus", "path": "models/tuned/Tuned_LSTM_Bulanan_U128_LR0.0001_KN.h5", "lb": 12, "data": close_m},
+            {"tf": "BULANAN", "name": "TCN Khusus", "path": "models/tuned/Tuned_TCN_Bulanan_U128_LR0.001_K3.h5", "lb": 12, "data": close_m},
+        ]
 
-                # Tampilkan Tabel Hasil
-                df_res = pd.DataFrame(results)
-                
-                st.markdown("### **TABEL RERATA PREDIKSI HARGA**")
-                st.table(df_res)
-                
-                st.success("Berhasil membandingkan 12 skenario model!")
-        else:
-            st.info("Silakan klik tombol di atas untuk memproses komparasi.")
+        # Menampilkan dalam 3 Kolom Besar (Harian, Mingguan, Bulanan)
+        col_h, col_w, col_m = st.columns(3)
+
+        with col_h:
+            st.markdown("### 📅 HARIAN")
+            for conf in all_configs[:4]:
+                model_obj = get_model(conf['path'])
+                pred = predict_stock(model_obj, conf['data'], conf['lb'])
+                st.metric(label=conf['name'], value=f"Rp {pred:,.2f}")
+                st.write("---")
+
+        with col_w:
+            st.markdown("### 🗓️ MINGGUAN")
+            for conf in all_configs[4:8]:
+                model_obj = get_model(conf['path'])
+                pred = predict_stock(model_obj, conf['data'], conf['lb'])
+                st.metric(label=conf['name'], value=f"Rp {pred:,.2f}")
+                st.write("---")
+
+        with col_m:
+            st.markdown("### 📊 BULANAN")
+            for conf in all_configs[8:]:
+                model_obj = get_model(conf['path'])
+                pred = predict_stock(model_obj, conf['data'], conf['lb'])
+                st.metric(label=conf['name'], value=f"Rp {pred:,.2f}")
+                st.write("---")
 
     # --- TAB 1: HARIAN (Lookback: 60) ---
     with tab1:
@@ -293,6 +281,7 @@ st.markdown(f"""
         </a>
     </div>
 """, unsafe_allow_html=True)
+
 
 
 
