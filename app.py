@@ -74,57 +74,31 @@ if not df_all.empty:
     with tab_comp:
         st.subheader("🚀 Komparasi Prediksi Harga: 12 Skenario Model")
         
-        # Ambil data input dan Harga Aktual Terakhir
+        # Ambil data input sekali saja
         close_h = df_all['Close'].dropna().values
-        last_h = float(df_all['Close'].iloc[-1]) # Harga Harian Terakhir
+        close_w = df_all['Close'].resample('W-MON').last().dropna().values
+        close_m = df_all['Close'].resample('ME').last().dropna().values
 
-        # Resample untuk Mingguan & Bulanan
-        df_w = df_all['Close'].resample('W-MON').last().dropna()
-        close_w = df_w.values
-        last_w = float(df_w.iloc[-1]) # Harga Minggu Ini
-
-        df_m = df_all['Close'].resample('ME').last().dropna()
-        close_m = df_m.values
-        last_m = float(df_m.iloc[-1]) # Harga Bulan Ini
-
-        # Konfigurasi Model & Data
+        # Konfigurasi Model
         tfs_config = {
-            "HARIAN": {
-                "data": close_h, 
-                "last_price": last_h,
-                "lb": 60, 
-                "icon": "📅", 
-                "models": [
-                    ("LSTM Standar", "models/baseline/Baseline_LSTM_Harian.h5"),
-                    ("TCN Standar", "models/baseline/Baseline_TCN_Harian.h5"),
-                    ("LSTM Khusus", "models/tuned/Tuned_LSTM_Harian_U64_LR0.001_KN.h5"),
-                    ("TCN Khusus", "models/tuned/Tuned_TCN_Harian_U128_LR0.001_K2.h5")
-                ]
-            },
-            "MINGGUAN": {
-                "data": close_w, 
-                "last_price": last_w,
-                "lb": 24, 
-                "icon": "🗓️", 
-                "models": [
-                    ("LSTM Standar", "models/baseline/Baseline_LSTM_Mingguan.h5"),
-                    ("TCN Standar", "models/baseline/Baseline_TCN_Mingguan.h5"),
-                    ("LSTM Khusus", "models/tuned/Tuned_LSTM_Mingguan_U64_LR0.001_KN.h5"),
-                    ("TCN Khusus", "models/tuned/Tuned_TCN_Mingguan_U64_LR0.001_K3.h5")
-                ]
-            },
-            "BULANAN": {
-                "data": close_m, 
-                "last_price": last_m,
-                "lb": 12, 
-                "icon": "📊", 
-                "models": [
-                    ("LSTM Standar", "models/baseline/Baseline_LSTM_Bulanan.h5"),
-                    ("TCN Standar", "models/baseline/Baseline_TCN_Bulanan.h5"),
-                    ("LSTM Khusus", "models/tuned/Tuned_LSTM_Bulanan_U128_LR0.0001_KN.h5"),
-                    ("TCN Khusus", "models/tuned/Tuned_TCN_Bulanan_U128_LR0.001_K3.h5")
-                ]
-            }
+            "HARIAN": {"data": close_h, "lb": 60, "icon": "📅", "models": [
+                ("LSTM Standar", "models/baseline/Baseline_LSTM_Harian.h5"),
+                ("TCN Standar", "models/baseline/Baseline_TCN_Harian.h5"),
+                ("LSTM Khusus", "models/tuned/Tuned_LSTM_Harian_U64_LR0.001_KN.h5"),
+                ("TCN Khusus", "models/tuned/Tuned_TCN_Harian_U128_LR0.001_K2.h5")
+            ]},
+            "MINGGUAN": {"data": close_w, "lb": 24, "icon": "🗓️", "models": [
+                ("LSTM Standar", "models/baseline/Baseline_LSTM_Mingguan.h5"),
+                ("TCN Standar", "models/baseline/Baseline_TCN_Mingguan.h5"),
+                ("LSTM Khusus", "models/tuned/Tuned_LSTM_Mingguan_U64_LR0.001_KN.h5"),
+                ("TCN Khusus", "models/tuned/Tuned_TCN_Mingguan_U64_LR0.001_K3.h5")
+            ]},
+            "BULANAN": {"data": close_m, "lb": 12, "icon": "📊", "models": [
+                ("LSTM Standar", "models/baseline/Baseline_LSTM_Bulanan.h5"),
+                ("TCN Standar", "models/baseline/Baseline_TCN_Bulanan.h5"),
+                ("LSTM Khusus", "models/tuned/Tuned_LSTM_Bulanan_U128_LR0.0001_KN.h5"),
+                ("TCN Khusus", "models/tuned/Tuned_TCN_Bulanan_U128_LR0.001_K3.h5")
+            ]}
         }
 
         # Render 3 Kolom
@@ -132,44 +106,26 @@ if not df_all.empty:
         
         for i, (name, config) in enumerate(tfs_config.items()):
             with cols[i]:
-                # Container Kartu
+                # Membuat kotak kartu menggunakan border=True agar rapi dan menyatu
                 with st.container(border=True):
                     st.markdown(f"### {config['icon']} {name}")
-                    
-                    # --- BAGIAN HARGA AKTUAL (Highlight Kuning/Emas) ---
-                    st.markdown(f"""
-                        <div style="background-color: rgba(255, 215, 0, 0.1); padding: 10px; border-radius: 8px; border: 1px solid gold; margin-bottom: 15px;">
-                            <p style="margin:0; font-size:12px; color: gold;">HARGA AKTUAL TERAKHIR:</p>
-                            <h4 style="margin:0; color: #FFFFFF;">Rp {config['last_price']:,.2f}</h4>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    
                     st.write("---")
-                    st.caption("Hasil Prediksi Model:")
                     
                     for m_name, m_path in config['models']:
                         try:
-                            # Proses Hitung Prediksi
+                            # Proses Hitung
                             m_obj = get_model(m_path)
                             val = predict_stock(m_obj, config['data'], config['lb'])
                             
-                            # Tampilan Baris Model
-                            c_l, c_r = st.columns([1.1, 1])
-                            with c_l:
-                                st.markdown(f"<p style='color:#AAA; font-size:14px; margin-bottom:0;'>{m_name}</p>", unsafe_allow_html=True)
-                            with c_r:
-                                st.markdown(f"<p style='color:#00FFCC; font-weight:bold; font-family:monospace; font-size:16px; margin-bottom:0; text-align:right;'>Rp {val:,.2f}</p>", unsafe_allow_html=True)
+                            # Tampilan per baris model (Gunakan kolom kecil di dalam kartu)
+                            c_left, c_right = st.columns([1.2, 1])
+                            with c_left:
+                                st.markdown(f"<span style='color:#AAA; font-size:14px;'>{m_name}</span>", unsafe_allow_html=True)
+                            with c_right:
+                                st.markdown(f"<span style='color:#00FFCC; font-weight:bold; font-family:monospace; font-size:16px;'>Rp {val:,.2f}</span>", unsafe_allow_html=True)
                         except:
                             st.error(f"Error {m_name}")
-                        st.write("") 
-
-
-
-### Perubahan Utama:
-1.  **Pengambilan Harga Terakhir:** Saya menambahkan variabel `last_h`, `last_w`, dan `last_m` untuk mengambil data penutupan paling baru dari masing-masing timeframe.
-2.  **Highlight Harga Aktual:** Di bagian atas setiap kartu, sekarang ada kotak berwarna **emas (gold)** yang menampilkan harga aktual. Ini memudahkan penguji melihat seberapa dekat (presisi) hasil prediksi model-model di bawahnya dengan harga asli saat ini.
-3.  **Teks Rapi:** Saya menambahkan `text-align:right` pada bagian harga prediksi agar angka Rupiah-nya lurus ke kanan, sehingga lebih enak dilihat.
-
+                        st.write("") # Spasi antar baris
     # --- TAB 1: HARIAN (Lookback: 60) ---
     with tab1:
         st.subheader("Analisis Perbandingan & Prediksi Harian")
